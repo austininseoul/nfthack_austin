@@ -16,6 +16,7 @@ export async function getServerSideProps({ req }) {
 }
 
 export default function Index(props) {
+  console.log(props);
   const emailRef = React.useRef<HTMLInputElement>()
   const router = useRouter()
 
