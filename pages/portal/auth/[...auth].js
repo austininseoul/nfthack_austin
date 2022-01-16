@@ -2,19 +2,21 @@ import Head from "next/head";
 import { Form } from "../../../components/Form";
 import { useMoralis } from "react-moralis";
 import * as React from "react";
+import { Navbar } from "../../../components/Navbar";
+import { supabase } from "../../../lib/supabase";
 
 export async function getServerSideProps({ req }) {
   var jwt = require("jsonwebtoken");
 
   const key = process.env.NEXT_PUBLIC_JWT_SIGNER;
-
+  const { user } = await supabase.auth.api.getUserByCookie(req);
   const url = req.url.replace("/portal/auth/", "");
 
-  const token = jwt.verify(url, key, (err, decoded) => {
+  const token = await jwt.verify(url, key, async (err, decoded) => {
     return decoded;
   });
 
-  return { props: { token: token } };
+  return { props: { token: token, user: user } };
 }
 
 export default function Home(props) {
@@ -34,9 +36,10 @@ export default function Home(props) {
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
-        <main className="min-h-screen bg-slate-900 text-white">
+        {props.user && <Navbar props={props} href={""} />}
+        <main className="min-h-screen py-24">
           <h1 className="text-5xl font-black text-center">
-            Welcome to Nifty Tickets
+            📺portal for: {props.token.contract_address}
           </h1>
           <br></br>
           {user && <Form address={owner_address} props={props} />}
@@ -46,22 +49,23 @@ export default function Home(props) {
   } else {
     return (
       <>
-        <main className="min-h-screen bg-slate-900 text-white">
-          <button
-            className="bg-green-500 text-white p-4 rounded-xl text-2xl font-bold"
-            onClick={() => authenticate()}
-          >
-            auth
-          </button>
-          <button
-            className="bg-blue-500 text-white p-4 rounded-xl text-2xl font-bold"
-            onClick={() => {
-              logout();
-              alert("logging out!");
-            }}
-          >
-            logout
-          </button>
+        {props.user && <Navbar props={props} href={""} />}
+        <main className="min-h-screen  flex justify-center items-center">
+          <div className="grid grid-cols-1 gap-6">
+            <p className="text-4xl font-bold">
+              📺portal for: {props.token.contract_address}
+            </p>
+            <button
+              className="bg-indigo-500 text-white p-4 rounded-xl text-2xl font-bold"
+              onClick={() =>
+                authenticate({
+                  signingMessage: `🎨NFTPortal: ${props.token.contract_address}`,
+                })
+              }
+            >
+              auth
+            </button>
+          </div>
         </main>
       </>
     );

@@ -12,7 +12,7 @@ export async function getServerSideProps({ req }) {
     };
   }
   /* if user is present, do something with the user data here */
-  return { props: { user }, redirect: { destination: '/user/dashboard', permanent: false } };
+  return { props: { user: user }, redirect: { destination: '/user/dashboard', permanent: false } };
 }
 
 export default function Index(props) {
@@ -23,33 +23,22 @@ export default function Index(props) {
     let { user, error } = await supabase.auth.signIn({
       email: input.current.value,
     });
+    if (user) alert('email sent!')
   };
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white">
-      <h1 className="text-5xl font-black text-center">
-        Welcome to Nifty Tickets
-      </h1>
-
-      <h2 className="text-center">login page</h2>
-      <form>
-        <input
-          className="text-black"
-          type="text"
-          ref={emailRef}
-          placeholder="youremailhere@gmail.com"
-        ></input>
+    <main className="min-h-screen  flex justify-center items-center">
+      <div className="grid grid-cols-1 gap-6">
+        <span className="text-black font-black text-4xl">🎨NFTPortal</span>
+        <p className="text-xl text-center ">enter email</p>
+        <input required={true} className="text-zinc-600 rounded-xl p-2 my-2 bg-zinc-300" ref={emailRef} placeholder="email address" />
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            handleLogin(emailRef);
-          }}
-          type="submit"
+          className="bg-indigo-500 text-white p-4 rounded-xl text-2xl font-bold"
+          onClick={() => handleLogin(emailRef)}
         >
-          login here
+          sign up
         </button>
-        <pre>{JSON.stringify(props)}</pre>
-      </form>
+      </div>
     </main>
   );
 }

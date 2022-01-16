@@ -1,10 +1,13 @@
-export const Navbar = () => {
-    return <div className="py-4 px-8 bg-zinc-50 w-full text-blue-600 ">
-        Portal
-        <div className="flex justify-end font-bold space-x-5">
-            <a >Dashboard</a>
-            <a>My Portal</a>
-            <a>Account</a>
+import Link from "next/link"
+
+export const Navbar = ({ props, href }) => {
+    return <nav className="py-4 px-8 fixed inset-0 bg-transparent w-full h-14 backdrop-blur-md text-indigo-600 z-0">
+
+        <div className="flex justify-between font-bold  items-center">
+            <span className="text-black font-black text-2xl">🎨NFTPortal</span>
+            <div className="flex space-x-5"><Link href="/user/dashboard">Dashboard</Link>
+                {href ? <a href={href} >My Portal</a> : null}
+            </div>
         </div>
-    </div>
+    </nav>
 }

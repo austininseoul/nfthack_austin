@@ -3,6 +3,7 @@ import * as React from 'react'
 import { useForm } from "react-hook-form";
 import { Event } from '../../types'
 import { Navbar } from "../../components/Navbar";
+import { useRouter } from "next/router";
 
 export async function getServerSideProps({ req }) {
     const { user } = await supabase.auth.api.getUserByCookie(req);
@@ -27,6 +28,7 @@ export default function Dashboard(props) {
     const [create, setCreate] = React.useState<boolean>(false)
     const { register, handleSubmit } = useForm()
     const [event, setEvent] = React.useState<Event>()
+    const router = useRouter()
 
     React.useEffect(() => {
         if (props.data.length > 0) {
@@ -49,74 +51,109 @@ export default function Dashboard(props) {
             tickets: []
         })
         alert('event created!')
-        await supabase.from('posts').insert({ title: formData.event_name.replace(" ", "-"), address: formData.event_address, max_tickets: formData.max_tickets })
+
+        if (event) {
+            await supabase.from('posts')
+                .update({
+                    title: formData.event_name.replace(" ", "-"),
+                    address: formData.event_address,
+                    max_tickets: formData.max_tickets,
+                    user: props.user.email
+                })
+                .match({ user: props.user.email })
+        } else {
+            await supabase.from('posts')
+                .insert({
+                    title: formData.event_name.replace(" ", "-"),
+                    address: formData.event_address,
+                    max_tickets: formData.max_tickets,
+                    user: props.user.email
+                })
+        }
+
+    }
+
+    const handleDelete = async () => {
+        await supabase.from('posts').delete().match({ user: props.user.email })
     }
 
     return (
         <>
-            <Navbar />
-            <main className="min-h-screen bg-slate-900 text-white">
-                <h1 className="text-5xl font-black text-center">
-                    Dashboard
-                </h1>
-                <div className="container mx-auto grid grid-cols-1 gap-4 w-1/2 py-12">
+            <Navbar props={props} href={event ? `/portal/${event.event_name}` : ""} />
+            <main className="min-h-screen lg:w-1/2 w-3/4 pt-24 mx-auto">
 
-                    {(!create && event === null) && <button
+                <h1 className="text-5xl font-black text-center">
+                    🎮dashboard
+                </h1>
+                <div className="container mx-auto grid grid-cols-1 gap-4 py-12">
+
+                    {(props.data.length < 1 && !create) && <><h1 className="text-xl text-left">
+                        👋hey, looks like you have no events, create one to get started
+                    </h1><button
                         className="bg-green-500 text-white p-4 rounded-xl text-2xl font-bold"
                         onClick={() => {
-                            alert('creating tickets')
+                            alert('creating event')
                             setCreate(true)
 
                         }
                         }
                     >
-                        create event
-                    </button>}
+                            create event
+                        </button></>}
                     {create && <>
-                        <form className="grid grid-cols-1" onSubmit={handleSubmit(onSubmit)}>
-                            <p className="text-2xl font-black text-center">enter event details</p>
-                            <input required={true} className="text-white rounded-xl p-2 my-2 bg-slate-700" {...register("event_name")} placeholder="event name" />
-                            <input required={true} className="text-white rounded-xl p-2 my-2 bg-slate-700" {...register("event_address")} placeholder="event address" />
-                            <input required={true} className="text-white rounded-xl p-2 my-2 bg-slate-700"{...register("max_tickets")} placeholder="# of tickets" type="number" />
-                            <button type="submit" className="bg-green-500 text-white p-4 rounded-xl text-2xl font-bold" >create</button>
+                        <p className="text-xl text-left ">{event ? "update" : "enter"} your event details below</p>
+                        <form className="grid grid-cols-1 py-6" onSubmit={handleSubmit(onSubmit)}>
+
+                            <p className="text-xl text-left ">🏆event name</p>
+                            <input required={true} className="text-zinc-600 rounded-xl p-2 my-2 bg-zinc-300" {...register("event_name")} placeholder="event name" />
+                            <p className="text-xl text-left ">📂event address</p>
+                            <input required={true} className="text-zinc-600 rounded-xl p-2 my-2 bg-zinc-300" {...register("event_address")} placeholder="event address" />
+                            <p className="text-xl text-left ">🎟max tickets</p>
+                            <input required={true} className="text-zinc-600 rounded-xl p-2 my-2 bg-zinc-300"{...register("max_tickets")} placeholder="# of tickets" type="number" />
+                            <button type="submit" className="my-6 bg-green-500 text-white p-4 rounded-xl text-2xl font-bold" >{event ? "update" : "create"}</button>
                         </form></>}
 
                     {event && <>
-                        <h1 className="text-5xl font-black text-center">
-                            {event.event_name}
+                        <div className="text-5xl font-bold tracking-tighter flex justify-between items-center text-center uppercase">
+                            <p> 📕{event.event_name.replace("-", " ")}</p>
+                        </div>
+                        <p className="font-mono">event address: <a className="text-indigo-500" href={`https://etherscan.io/address/${event.event_address}`}>{event.event_address}</a></p>
+
+                        <p className="font-mono">by default all items at address are valid tickets</p>
+                        <h1 className="text-2xl font-black text-left">
+                            link @: <a href={`/portal/${event.event_name}`} className="text-indigo-500">{`/${event.event_name}`}</a>
                         </h1>
-                        <p className="font-mono">event address: <a href={`https://etherscan.io/address/${event.event_address}`}>0x1bw3...b4</a></p>
-                        <div className="grid grid-cols-2">
-                            <p className="text-xl font-black text-center">
+                        <div className="grid grid-cols-2 gap-6">
+                            <p className="text-xl font-mono text-center">
                                 Remaining Tickets: ({event.max_tickets})
                             </p>
-                            <p className="text-xl font-black text-center">
+                            <p className="text-xl font-mono text-center">
                                 Max Tickets: ({event.max_tickets})
-                            </p></div>
-                        <p className="font-mono">by default all items at address are valid tickets</p>
-                        <h1 className="text-5xl font-black text-center">
-                            My Portal: <a href={`http://localhost:3000/portal/${event.event_name.replace(' ', '-')}`} className="text-blue-500">{`${event.event_name}`}</a>
-                        </h1>
-                        <button
-                            className="bg-blue-500 text-white p-4 rounded-xl text-2xl font-bold"
-                            onClick={() => {
+                            </p>
+                            <button
+                                className="bg-indigo-500 text-white p-4 rounded-xl text-2xl font-bold"
+                                onClick={() => {
 
-                                alert("edit");
-                                setCreate(!create)
-                            }}
-                        >
-                            edit
+                                    alert("edit");
+                                    setCreate(!create)
+                                }}
+                            >
+                                edit
 
-                        </button>
-                        <button
-                            className="bg-red-500 text-white p-4 rounded-xl text-2xl font-bold"
-                            onClick={() => {
+                            </button>
+                            <button
+                                className="bg-red-500 text-white p-4 rounded-xl text-2xl font-bold"
+                                onClick={() => {
 
-                                alert("are you sure?");
-                            }}
-                        >
-                            delete
-                        </button>
+                                    alert("are you sure?");
+                                    handleDelete()
+                                    router.reload()
+                                }}
+                            >
+                                delete
+                            </button>
+                        </div>
+
                     </>}
                 </div>
             </main>

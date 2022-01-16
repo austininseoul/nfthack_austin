@@ -13,7 +13,7 @@ export const Form = ({ address, props }) => {
 
   const onSubmit = async () => {
     setLoading(true)
-    await Moralis.Web3API.account.getNFTs({ chain: 'eth', address: ticketowner.owner_address })
+    await Moralis.Web3API.account.getNFTs({ chain: 'polygon', address: ticketowner.owner_address })
       .then((res) => {
 
         let tickets: Array<Ticket> = res.result?.map((e) => {
@@ -33,12 +33,16 @@ export const Form = ({ address, props }) => {
         })
         if (tickets[0] !== undefined) {
           setTicketOwner({ owner_address: address, tickets: tickets })
+          alert('success,  burning your ticket!')
+          logout()
         } else {
           setTicketOwner({ owner_address: address, tickets: [] })
+          alert('oops try again')
+          logout()
         }
 
         setLoading(false)
-        logout()
+
         //redirect / ping some api
 
       })
@@ -48,15 +52,15 @@ export const Form = ({ address, props }) => {
   return (
     <>
 
-      <form className="container mx-auto font-bold grid grid-cols-2 w-1/2 gap-2 " onSubmit={handleSubmit(onSubmit)}>
-        <label className="text-2xl font-bold">Concert Address</label>
-        <input disabled={true} className="text-white rounded-xl p-2 my-2 bg-slate-700" {...register("contract_address")} placeholder="Concert Address" value={props.token.contract_address} />
-        <label className="text-2xl font-bold">Ticket ID</label>
-        <input disabled={true} className="text-white rounded-xl p-2 my-2  bg-slate-700" {...register("ticket_id")} placeholder="Ticket Number" value={props.token.ticket_id} />
+      <form className="container mx-auto font-bold grid grid-cols-2 w-1/2 gap-2 py-6" onSubmit={handleSubmit(onSubmit)}>
+        <label className="text-xl flex items-center">event address</label>
+        <input disabled={true} className="text-zinc-600 rounded-xl p-2 my-2 bg-zinc-300" {...register("contract_address")} placeholder="Concert Address" value={props.token.contract_address} />
+        <label className="text-xl flex items-center">ticket ID</label>
+        <input disabled={true} className="text-zinc-600 rounded-xl p-2 my-2 bg-zinc-300" {...register("ticket_id")} placeholder="Ticket Number" value={props.token.ticket_id} />
 
-        <button className="col-span-2 w-full bg-red-500 disabled:bg-red-800 text-white p-4 rounded-xl text-2xl font-bold" disabled={loading} type="submit" >check</button>
+        <button className="col-span-2 w-full bg-indigo-500 disabled:bg-indigo-800 text-white p-4 rounded-xl text-2xl font-bold" disabled={loading} type="submit" >verify</button>
       </form>
-      <p className="font-mono">{JSON.stringify(ticketowner)}</p>
+      {/* <p className="font-mono">{JSON.stringify(ticketowner)}</p> */}
       <h1 className="text-4xl font-bold text-center">tickets({ticketowner.tickets.length})</h1>
     </>
   );
